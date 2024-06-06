@@ -66,9 +66,9 @@ fn get_pkgs() -> String {
     }
 
 
-    match Command::new("apt").arg("--installed").output() {
+    match Command::new("dpkg-query").args(["-f", "'.\n'", "-W"]).output() {
         | Ok(_) => {
-            let pkgf = Command::new("apt").arg("--installed").output().unwrap();
+            let pkgf = Command::new("apt").args(["-f", "'.\n'", "-W"]).output().unwrap();
             let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(apt), ", pgk = (pkgfs.len() - 1)));
@@ -101,7 +101,7 @@ fn get_pkgs() -> String {
 
     match Command::new("qlist").arg("-l").output() {
         | Ok(_) => {
-            let pkgf = Command::new("qlist").arg("-l").output().unwrap();
+            let pkgf = Command::new("pacman").args(["-Q", "-q"]).output().unwrap();
             let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(portage), ", pgk = (pkgfs.len() - 1)));
