@@ -2,8 +2,16 @@ use colored::*;
 use std::process::Command;
 
 fn get_os_name() -> Option<String> {
-    let output = Command::new("uname").arg("-ro").output().ok()?;
-    Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    #[cfg(any(target_os = "freebsd", target_os = "linux"))]
+    {
+        let output = Command::new("uname").arg("-ro").output().ok()?;
+        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    }
+    #[cfg(target_os = "openbsd")]
+    {
+        let output = Command::new("uname").arg("-srm").output().ok()?;
+        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    }
 }
 
 fn get_host_name() -> Option<String> {
@@ -12,7 +20,7 @@ fn get_host_name() -> Option<String> {
 }
 
 fn get_cpu_name() -> Option<String> {
-    #[cfg(target_os = "freebsd")]
+    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
     {
         let output = Command::new("sysctl")
             .args(["-n", "hw.model"])
