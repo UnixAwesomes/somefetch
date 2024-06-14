@@ -210,7 +210,6 @@ fn main() {
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "Unknown".to_string());
     let desktop = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_else(|_| "Unknown".to_string());
 
-    print!("\x1B[2J\x1B[1;1H");
 
     println!(
         "
