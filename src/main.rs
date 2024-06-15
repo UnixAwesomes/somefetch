@@ -2,14 +2,19 @@ use colored::*;
 use std::process::Command;
 
 fn get_os_name() -> Option<String> {
-    #[cfg(any(target_os = "freebsd", target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     {
-        let output = Command::new("uname").arg("-ro").output().ok()?;
+        let output = Command::new("uname").arg("-rm").output().ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
     #[cfg(target_os = "openbsd")]
     {
         let output = Command::new("uname").arg("-srm").output().ok()?;
+        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    }
+    #[cfg(target_os = "freebsd")]
+    {
+        let output = Command::new("uname").arg("-rom").output().ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
 }
