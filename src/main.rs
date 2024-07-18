@@ -7,7 +7,7 @@ fn get_os_name() -> Option<String> {
         let output = Command::new("uname").arg("-rm").output().ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
-    #[cfg(target_os = "openbsd")]
+    #[cfg(any(target_os = "openbsd", target_os = "netbsd"))]
     {
         let output = Command::new("uname").arg("-srm").output().ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
@@ -25,7 +25,7 @@ fn get_host_name() -> Option<String> {
 }
 
 fn get_cpu_name() -> Option<String> {
-    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
+    #[cfg(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
     {
         let output = Command::new("sysctl")
             .args(["-n", "hw.model"])
