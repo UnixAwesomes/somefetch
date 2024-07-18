@@ -171,12 +171,12 @@ fn get_pkgs() -> String {
         Err(_why) => {}
     }
 
-    match Command::new("pkgin").arg("info").output() {
+    match Command::new("pkgin").arg("list").output() {
         Ok(_) => {
-            let pkgf = Command::new("pkgin").arg("info").output().unwrap();
+            let pkgf = Command::new("pkgin").arg("list").output().unwrap();
             let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pkgsrc), ", pgk = (pkgfs.len() - 1)));
+            pkg.push(format!("{pgk}(pkgin), ", pgk = (pkgfs.len() - 1)));
         }
         Err(_why) => {}
     }
