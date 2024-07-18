@@ -1,4 +1,4 @@
-
+[![build result](https://build.opensuse.org/projects/home:sophr.temin/packages/somefetch/badge.svg?type=default)](https://build.opensuse.org/package/show/home:sophr.temin/somefetch)
 ## Simple fetch for unix-like systems
 
 ![Screenshot of somefetch](https://github.com/UnixAwesomes/somefetch/blob/master/somefetch.png)
