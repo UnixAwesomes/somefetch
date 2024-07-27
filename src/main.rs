@@ -2,7 +2,7 @@ use colored::*;
 use std::process::Command;
 
 fn get_os_name() -> Option<String> {
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     {
         let output = Command::new("uname").arg("-rm").output().ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
@@ -33,19 +33,25 @@ fn get_cpu_name() -> Option<String> {
             .ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     {
         let info = std::fs::read_to_string("/proc/cpuinfo").ok()?;
+        #[cfg(target_os = "android")]
+        let cpu_string = "Hardware";
+        #[cfg(target_os = "linux")]
+        let cpu_string = "model name";
         for line in info.lines() {
-            if line.starts_with("model name") {
+            if line.starts_with(cpu_string) {
                 let (_, name) = line.split_once(':')?;
                 return Some(name.trim().to_owned());
             }
         }
-
         None
     }
 }
+
+
+
 
 fn get_pkgs() -> String {
     let mut pkg: Vec<String> = Vec::new();
