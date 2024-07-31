@@ -18,6 +18,11 @@ fn get_os_name() -> Option<String> {
         let output = Command::new("uname").arg("-rom").output().ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
+    #[cfg(target_os = "illumos")]
+    {
+        let output = Command::new("uname").arg("-v").output().ok()?;
+        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    }
 }
 
 fn get_host_name() -> Option<String> {
