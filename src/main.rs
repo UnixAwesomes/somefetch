@@ -1,4 +1,5 @@
 use colored::*;
+use std::env;
 use std::process::Command;
 
 fn get_os_name() -> Option<String> {
@@ -50,7 +51,11 @@ fn get_cpu_name() -> Option<String> {
     }
 }
 
-
+fn get_shell() -> String {
+    let shell = env::var("SHELL").expect("Unknown");
+    let parts: Vec<&str> = shell.split('/').collect();
+    parts.last().unwrap().to_string()
+}
 
 
 fn get_pkgs() -> String {
@@ -218,8 +223,8 @@ fn main() {
     let os_name = get_os_name().unwrap_or("Unknown".to_string());
     let cpu = get_cpu_name().unwrap_or("Unknown".to_string());
     let hostname = get_host_name().unwrap_or("Unknown".to_string());
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "Unknown".to_string());
-    let desktop = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_else(|_| "Unknown".to_string());
+    let shell = get_shell();
+    let desktop = env::var("XDG_CURRENT_DESKTOP").unwrap_or_else(|_| "Unknown".to_string());
 
 
     println!(
