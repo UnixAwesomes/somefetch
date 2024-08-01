@@ -5,24 +5,25 @@ use std::process::Command;
 fn get_os_name() -> Option<String> {
     #[cfg(any(target_os = "linux", target_os = "android"))]
     {
-        let output = Command::new("uname").arg("-rm").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-rm")
     }
     #[cfg(any(target_os = "openbsd", target_os = "netbsd"))]
     {
-        let output = Command::new("uname").arg("-srm").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-srm")
     }
     #[cfg(target_os = "freebsd")]
     {
-        let output = Command::new("uname").arg("-rom").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-rom")
     }
     #[cfg(target_os = "illumos")]
     {
-        let output = Command::new("uname").arg("-v").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-v")
     }
+}
+
+fn get_info_name(args: &str) -> Option<String> {
+    let output = Command::new("uname").arg(args).output().ok()?;
+    Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
 }
 
 fn get_host_name() -> Option<String> {
