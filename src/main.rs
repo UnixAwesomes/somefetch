@@ -1,22 +1,29 @@
 use colored::*;
+use std::env;
 use std::process::Command;
 
 fn get_os_name() -> Option<String> {
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     {
-        let output = Command::new("uname").arg("-rm").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-rm")
     }
-    #[cfg(target_os = "openbsd")]
+    #[cfg(any(target_os = "openbsd", target_os = "netbsd"))]
     {
-        let output = Command::new("uname").arg("-srm").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-srm")
     }
     #[cfg(target_os = "freebsd")]
     {
-        let output = Command::new("uname").arg("-rom").output().ok()?;
-        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+        get_info_name("-rom")
     }
+    #[cfg(target_os = "illumos")]
+    {
+        get_info_name("-v")
+    }
+}
+
+fn get_info_name(args: &str) -> Option<String> {
+    let output = Command::new("uname").arg(args).output().ok()?;
+    Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
 }
 
 fn get_host_name() -> Option<String> {
@@ -25,7 +32,7 @@ fn get_host_name() -> Option<String> {
 }
 
 fn get_cpu_name() -> Option<String> {
-    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
+    #[cfg(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
     {
         let output = Command::new("sysctl")
             .args(["-n", "hw.model"])
@@ -33,19 +40,29 @@ fn get_cpu_name() -> Option<String> {
             .ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     {
         let info = std::fs::read_to_string("/proc/cpuinfo").ok()?;
+        #[cfg(target_os = "android")]
+        let cpu_string = "Hardware";
+        #[cfg(target_os = "linux")]
+        let cpu_string = "model name";
         for line in info.lines() {
-            if line.starts_with("model name") {
+            if line.starts_with(cpu_string) {
                 let (_, name) = line.split_once(':')?;
                 return Some(name.trim().to_owned());
             }
         }
-
         None
     }
 }
+
+fn get_shell() -> String {
+    let shell = env::var("SHELL").expect("Unknown");
+    let parts: Vec<&str> = shell.split('/').collect();
+    parts.last().unwrap().to_string()
+}
+
 
 fn get_pkgs() -> String {
     let mut pkg: Vec<String> = Vec::new();
@@ -171,12 +188,12 @@ fn get_pkgs() -> String {
         Err(_why) => {}
     }
 
-    match Command::new("pkgin").arg("info").output() {
+    match Command::new("pkgin").arg("list").output() {
         Ok(_) => {
-            let pkgf = Command::new("pkgin").arg("info").output().unwrap();
+            let pkgf = Command::new("pkgin").arg("list").output().unwrap();
             let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pkgsrc), ", pgk = (pkgfs.len() - 1)));
+            pkg.push(format!("{pgk}(pkgin), ", pgk = (pkgfs.len() - 1)));
         }
         Err(_why) => {}
     }
@@ -212,8 +229,8 @@ fn main() {
     let os_name = get_os_name().unwrap_or("Unknown".to_string());
     let cpu = get_cpu_name().unwrap_or("Unknown".to_string());
     let hostname = get_host_name().unwrap_or("Unknown".to_string());
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "Unknown".to_string());
-    let desktop = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_else(|_| "Unknown".to_string());
+    let shell = get_shell();
+    let desktop = env::var("XDG_CURRENT_DESKTOP").unwrap_or_else(|_| "Unknown".to_string());
 
 
     println!(
