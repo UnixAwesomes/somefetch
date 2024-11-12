@@ -1,5 +1,6 @@
 use colored::*;
 use std::env;
+use std::str;
 use std::process::Command;
 
 fn get_os_name() -> Option<String> {
@@ -40,6 +41,24 @@ fn get_cpu_name() -> Option<String> {
             .ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
+
+    #[cfg(target_os = "illumos")]
+    {
+        let output = Command::new("kstat")
+            .args(["-p", "cpu_info:::brand"])
+            .output()
+            .ok()?;
+      
+        let output_str = str::from_utf8(&output.stdout).ok()?;
+
+        for line in output_str.lines() {
+            if let Some((_, model)) = line.split_once('\t') {
+                return Some(model.trim().to_string());
+            }
+        }
+        None
+    }
+    
     #[cfg(any(target_os = "linux", target_os = "android"))]
     {
         let info = std::fs::read_to_string("/proc/cpuinfo").ok()?;
