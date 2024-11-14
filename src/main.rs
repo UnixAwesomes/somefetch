@@ -145,26 +145,26 @@ fn get_pkgs() -> String {
             let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(pkg), ", pgk = (pkgfs.len() - 1)));
-        }
+    }
 
     if let Ok(pkgf) = Command::new("pkgin").arg("info").output() {
             let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(pkgin), ", pgk = (pkgfs.len() - 1)));
-        }    
+    }    
 
     if let Ok(pkgf) = Command::new("pkg_info").output() {
             let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(pkg_info), ", pgk = (pkgfs.len() - 1)));
-        }   
+    }   
     
 
     if let Ok(pkgf) = Command::new("snap").arg("list").output() {
             let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(snap), ", pgk = (pkgfs.len() - 1)));
-        }   
+    }   
 
     let mut pkgs: String = pkg.into_iter().collect::<String>();
     let mut v: Vec<char> = pkgs.chars().collect();
