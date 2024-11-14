@@ -85,157 +85,86 @@ fn get_shell() -> String {
 
 fn get_pkgs() -> String {
     let mut pkg: Vec<String> = Vec::new();
-    match Command::new("xbps-query").arg("-l").output() {
-        Ok(_) => {
-            let pkgx = Command::new("xbps-query").arg("-l").output().unwrap();
-            let pkgsx = String::from_utf8(pkgx.stdout).unwrap();
-            let pkgxs: Vec<&str> = pkgsx.split("\n").collect();
-            pkg.push(format!("{pgk}(xbps), ", pgk = (pkgxs.len() - 1)));
-        }
-        Err(_why) => {}
+
+    if let Ok(pkgf) = Command::new("xbps-query").arg("-l").output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(xbps), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("apk").arg("info").output() {
-        Ok(_) => {
-            let pkga = Command::new("apk").arg("info").output().unwrap();
-            let pkgsa = String::from_utf8(pkga.stdout).unwrap();
-            let pkgas: Vec<&str> = pkgsa.split("\n").collect();
-            pkg.push(format!("{pgk}(apk), ", pgk = (pkgas.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("apk").arg("info").output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(apk), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("flatpak").arg("list").output() {
-        Ok(_) => {
-            let pkgf = Command::new("flatpak").arg("list").output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(flatpak), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("flatpak").arg("list").output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(flatpak), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("dpkg-query")
-        .args(["-f", "'.\n'", "-W"])
-        .output()
-    {
-        Ok(_) => {
-            let pkgf = Command::new("dpkg-query")
-                .args(["-f", "'.\n'", "-W"])
-                .output()
-                .unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(apt), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("dpkg-query").args(["-f", "'.\n'", "-W"]).output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(apt), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("dnf").args(["list", "installed"]).output() {
-        Ok(_) => {
-            let pkgf = Command::new("dnf")
-                .args(["list", "installed"])
-                .output()
-                .unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(dnf), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("dnf").args(["list", "installed"]).output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(dnf), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("pacman").args(["-Q", "-q"]).output() {
-        Ok(_) => {
-            let pkgf = Command::new("pacman").args(["-Q", "-q"]).output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pacman), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("pacman").args(["-Q", "-q"]).output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(pacman), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("qlist").arg("-I").output() {
-        Ok(_) => {
-            let pkgf = Command::new("qlist").arg("-I").output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(portage), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("qlist").arg("-I").output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(portage), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("zypper")
-        .arg("se")
-        .arg("--installed-only")
-        .output()
-    {
-        Ok(_) => {
-            let pkgf = Command::new("zypper")
-                .args(["se", "--installed-only"])
-                .output()
-                .unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(zypper), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("zypper").args(["se", "--installed-only"]).output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(zypper), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("nix-env")
-        .args(["-qa", "--installed", "\"*\""])
-        .output()
-    {
-        Ok(_) => {
-            let pkgf = Command::new("nix-env")
-                .args(["-qa", "--installed", "\"*\""])
-                .output()
-                .unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(nix), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
+    if let Ok(pkgf) = Command::new("nix-env").args(["-qa", "--installed", "\"*\""]).output() {
+        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
+        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
+        pkg.push(format!("{pgk}(nix), ", pgk = (pkgfs.len() - 1)));
     }
 
-    match Command::new("pkg").arg("info").output() {
-        Ok(_) => {
-            let pkgf = Command::new("pkg").arg("info").output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
+
+    if let Ok(pkgf) = Command::new("pkg").arg("info").output() {
+            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(pkg), ", pgk = (pkgfs.len() - 1)));
         }
-        Err(_why) => {}
-    }
 
-    match Command::new("pkgin").arg("list").output() {
-        Ok(_) => {
-            let pkgf = Command::new("pkgin").arg("list").output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
+    if let Ok(pkgf) = Command::new("pkgin").arg("info").output() {
+            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
             pkg.push(format!("{pgk}(pkgin), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
-    }
+        }    
 
-    match Command::new("pkg_info").output() {
-        Ok(_) => {
-            let pkgf = Command::new("pkg_info").output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
+    if let Ok(pkgf) = Command::new("pkg_info").output() {
+            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pkg_add), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
-    }
+            pkg.push(format!("{pgk}(pkg_info), ", pgk = (pkgfs.len() - 1)));
+        }   
+    
 
-    match Command::new("snap").arg("list").output() {
-        Ok(_) => {
-            let pkgf = Command::new("snap").arg("list").output().unwrap();
-            let pkgsf = String::from_utf8(pkgf.stdout).unwrap();
+    if let Ok(pkgf) = Command::new("snap").arg("list").output() {
+            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
             let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(snapd), ", pgk = (pkgfs.len() - 1)));
-        }
-        Err(_why) => {}
-    }
+            pkg.push(format!("{pgk}(snap), ", pgk = (pkgfs.len() - 1)));
+        }   
 
     let mut pkgs: String = pkg.into_iter().collect::<String>();
     let mut v: Vec<char> = pkgs.chars().collect();
