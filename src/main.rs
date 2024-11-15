@@ -110,7 +110,7 @@ fn get_pkgs() -> String {
         pkg.push(format!("{pgk}(apt), ", pgk = (pkgfs.len() - 1)));
     }
 
-    if let Ok(pkgf) = Command::new("dnf").args(["list", "--installed"]).output() {
+    if let Ok(pkgf) = Command::new("rpm").arg("-qa").output() {
         let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
         let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
         pkg.push(format!("{pgk}(dnf), ", pgk = (pkgfs.len() - 1)));
