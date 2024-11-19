@@ -113,7 +113,7 @@ fn get_pkgs() -> String {
     if let Ok(pkgf) = Command::new("rpm").arg("-qa").output() {
         let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
         let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(dnf), ", pgk = (pkgfs.len() - 1)));
+        pkg.push(format!("{pgk}(rpm), ", pgk = (pkgfs.len() - 1)));
     }
 
     if let Ok(pkgf) = Command::new("pacman").args(["-Q", "-q"]).output() {
@@ -126,12 +126,6 @@ fn get_pkgs() -> String {
         let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
         let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
         pkg.push(format!("{pgk}(portage), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("zypper").args(["se", "--installed-only"]).output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(zypper), ", pgk = (pkgfs.len() - 1)));
     }
 
     if let Ok(pkgf) = Command::new("nix-env").args(["-qa", "--installed", "\"*\""]).output() {
