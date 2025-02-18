@@ -1,6 +1,9 @@
 [package]
 name = "somefetch"
 version = "0.2.0"
+description = "Simple fetch for unix-like"
+authors = ["UnixAwesomes <totalslinux@gmail.com>"]
+license = "BSD-3-Clause"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
