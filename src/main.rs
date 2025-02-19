@@ -77,9 +77,10 @@ fn get_cpu_name() -> Option<String> {
 }
 
 fn get_shell() -> String {
-    let shell = env::var("SHELL").expect("Unknown");
-    let parts: Vec<&str> = shell.split('/').collect();
-    parts.last().unwrap().to_string()
+    env::var("SHELL")
+        .ok()
+        .and_then(|s| s.split('/').last().map(|s| s.to_string()))
+        .unwrap_or_else(|| "Unknown".into())
 }
 
 
