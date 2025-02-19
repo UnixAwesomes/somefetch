@@ -84,87 +84,37 @@ fn get_shell() -> String {
 
 
 fn get_pkgs() -> String {
-    let mut pkg: Vec<String> = Vec::new();
+    let package_managers = vec![
+        ("xbps-query", &["-l"][..], "xbps"),
+        ("apk", &["info"], "apk"),
+        ("rpm", &["-qa"], "rpm"),
+        ("flatpak", &["list"], "flatpak"),
+        ("dpkg-query", &["-f", "'.\\n'", "-W"], "apt"),
+        ("pacman", &["-Q", "-q"], "pacman"),
+        ("qlist", &["-I"], "portage"),
+        ("pkg", &["info"], "pkg"),
+        ("pkgin", &["info"], "pkgin"),
+        ("pkg_info", &[], "pkg_info"),
+        ("snap", &["list"], "snap"),
+    ];
 
-    if let Ok(pkgf) = Command::new("xbps-query").arg("-l").output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(xbps), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("apk").arg("info").output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(apk), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("flatpak").arg("list").output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(flatpak), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("dpkg-query").args(["-f", "'.\n'", "-W"]).output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(apt), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("rpm").arg("-qa").output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(rpm), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("pacman").args(["-Q", "-q"]).output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(pacman), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("qlist").arg("-I").output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(portage), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("nix-env").args(["-qa", "--installed", "\"*\""]).output() {
-        let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-        let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-        pkg.push(format!("{pgk}(nix), ", pgk = (pkgfs.len() - 1)));
-    }
-
-
-    if let Ok(pkgf) = Command::new("pkg").arg("info").output() {
-            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pkg), ", pgk = (pkgfs.len() - 1)));
-    }
-
-    if let Ok(pkgf) = Command::new("pkgin").arg("info").output() {
-            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pkgin), ", pgk = (pkgfs.len() - 1)));
-    }    
-
-    if let Ok(pkgf) = Command::new("pkg_info").output() {
-            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(pkg_info), ", pgk = (pkgfs.len() - 1)));
-    }   
-    
-
-    if let Ok(pkgf) = Command::new("snap").arg("list").output() {
-            let pkgsf = String::from_utf8_lossy(&pkgf.stdout);
-            let pkgfs: Vec<&str> = pkgsf.split("\n").collect();
-            pkg.push(format!("{pgk}(snap), ", pgk = (pkgfs.len() - 1)));
-    }   
-
-    let mut pkgs: String = pkg.into_iter().collect::<String>();
-    let mut v: Vec<char> = pkgs.chars().collect();
-    v.remove(v.len() - 2);
-    pkgs = v.into_iter().collect();
-    pkgs
+    package_managers
+        .iter()
+        .filter_map(|(cmd, args, tag)| {
+            Command::new(cmd)
+                .args(*args)
+                .output()
+                .ok()
+                .and_then(|output| {
+                    let count = String::from_utf8_lossy(&output.stdout)
+                        .lines()
+                        .filter(|line| !line.is_empty())
+                        .count();
+                    (count > 0).then(|| format!("{}({})", count, tag))
+                })
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn main() {
