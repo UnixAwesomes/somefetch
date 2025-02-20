@@ -10,6 +10,9 @@ git clone https://github.com/UnixAwesomes/somefetch
 cd somefetch
 cargo build --release
 ```
+
+Somefetch Debian package build recipe [link](https://github.com/OctoBanon-Main/somefetch-debian)
+
 ### Available in openSUSE
 
 link: [click](https://software.opensuse.org//download.html?project=home%3Asophr.temin&package=somefetch)
