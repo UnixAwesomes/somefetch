@@ -11,7 +11,7 @@ cd somefetch
 cargo build --release
 ```
 
-Somefetch Debian package build recipe [link](https://github.com/OctoBanon-Main/somefetch-debian)
+Debian Package Build Instructions: [link](https://github.com/OctoBanon-Main/somefetch-debian)
 
 ### Available in openSUSE
 
