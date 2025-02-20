@@ -1,6 +1,6 @@
 [package]
 name = "somefetch"
-version = "0.2.0"
+version = "0.2.1"
 description = "Simple fetch for unix-like"
 authors = ["UnixAwesomes <totalslinux@gmail.com>"]
 license = "BSD-3-Clause"
