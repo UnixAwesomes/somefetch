@@ -83,9 +83,8 @@ fn get_shell() -> String {
         .unwrap_or_else(|| "Unknown".into())
 }
 
-
 fn get_pkgs() -> String {
-    let package_managers = vec![
+    let package_managers: &[(&str, &[&str], &str)] = &[
         ("xbps-query", &["-l"][..], "xbps"),
         ("apk", &["info"], "apk"),
         ("rpm", &["-qa"], "rpm"),
@@ -112,7 +111,6 @@ fn get_pkgs() -> String {
                 .and_then(|output| {
                     let count = String::from_utf8_lossy(&output.stdout)
                         .lines()
-                        .filter(|line| !line.is_empty())
                         .count();
                     (count > 0).then(|| format!("{}({})", count, tag))
                 })
