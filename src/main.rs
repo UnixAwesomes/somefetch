@@ -97,6 +97,7 @@ fn get_pkgs() -> String {
         ("pkgin", &["info"], "pkgin"),
         ("pkg_info", &[], "pkg_info"),
         ("snap", &["list"], "snap"),
+        ("eopkg", &["li"], "eopkg"),
     ];
 
     package_managers
