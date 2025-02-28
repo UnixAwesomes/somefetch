@@ -97,6 +97,7 @@ fn get_pkgs() -> String {
         ("pkg_info", &[], "pkg_info"),
         ("snap", &["list"], "snap"),
         ("eopkg", &["li"], "eopkg"),
+        ("opkg", &["list-installed"], "opkg"),
         ("nix-user-pkgs", &[], "nix-user"),
         ("nix-store", &["-qR", "/run/current-system/sw"], "nix-system"),
     ];
