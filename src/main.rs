@@ -33,7 +33,7 @@ fn get_host_name() -> Option<String> {
 }
 
 fn get_cpu_name() -> Option<String> {
-    #[cfg(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
+    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
     {
         let output = Command::new("sysctl")
             .args(["-n", "hw.model"])
