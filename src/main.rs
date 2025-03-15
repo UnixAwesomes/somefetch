@@ -42,6 +42,15 @@ fn get_cpu_name() -> Option<String> {
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
     }
 
+    #[cfg(target_os = "netbsd")]
+    {
+        let output = Command::new("sysctl")
+            .args(["-n", "machdep.cpu_brand"])
+            .output()
+            .ok()?;
+        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    }
+
     #[cfg(target_os = "illumos")]
     {
         let output = Command::new("kstat")
