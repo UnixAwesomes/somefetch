@@ -22,8 +22,8 @@ fn get_os_name() -> Option<String> {
     }
     #[cfg(target_os = "macos")]
     {
-		get_info_name("-sr")
-	}
+	get_info_name("-sr")
+    }
 }
 
 fn get_info_name(args: &str) -> Option<String> {
