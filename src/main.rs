@@ -20,6 +20,10 @@ fn get_os_name() -> Option<String> {
     {
         get_info_name("-v")
     }
+    #[cfg(target_os = "macos")]
+    {
+		get_info_name("-sr")
+	}
 }
 
 fn get_info_name(args: &str) -> Option<String> {
@@ -46,6 +50,15 @@ fn get_cpu_name() -> Option<String> {
     {
         let output = Command::new("sysctl")
             .args(["-n", "machdep.cpu_brand"])
+            .output()
+            .ok()?;
+        Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let output = Command::new("sysctl")
+            .args(["-n", "machdep.cpu.brand_string"])
             .output()
             .ok()?;
         Some(String::from_utf8(output.stdout).ok()?.trim().to_string())
@@ -102,6 +115,7 @@ fn get_pkgs() -> String {
         ("pacman", &["-Q", "-q"], "pacman"),
         ("qlist", &["-I"], "portage"),
         ("pkg", &["info"], "pkg"),
+        ("brew", &["list"], "homebrew"),
         ("pkgin", &["info"], "pkgin"),
         ("pkg_info", &[], "pkg_info"),
         ("snap", &["list"], "snap"),
