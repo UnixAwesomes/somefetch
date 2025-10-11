@@ -271,6 +271,54 @@ fn get_terminal() -> String {
     }
 }
 
+fn parse_memory_value(line: &str) -> u64 {
+    line.split_whitespace()
+        .nth(1)
+        .unwrap_or("0")
+        .parse::<u64>()
+        .unwrap_or(0)
+}
+
+fn get_memory() -> String {
+    let kb_to_gb = |kilobytes: u64| kilobytes as f64 / (1024.0 * 1024.0);
+
+    let info = read_to_string("/proc/meminfo").ok().unwrap_or_else(|| "Unknown".to_string());
+    let mut mem_total: u64 = 0;
+
+        #[cfg(target_os = "linux")]
+        {
+            let mut mem_available: u64 = 0;
+            for line in info.lines() {
+                    if line.starts_with("MemTotal:") {
+                        mem_total = parse_memory_value(&line);
+                    } else if line.starts_with("MemAvailable:") {
+                        mem_available = parse_memory_value(&line);
+                    }
+                }
+
+
+            let used = mem_total - mem_available;
+            return format!("{:.2} GiB / {:.2} GiB", kb_to_gb(used), kb_to_gb(mem_total));
+        }
+
+        #[cfg(target_os = "netbsd")]
+        {
+            let mut mem_free: u64 = 0;
+            for line in info.lines() {
+                    if line.starts_with("MemTotal:") {
+                        mem_total = parse_memory_value(&line);
+                    } else if line.starts_with("MemAvailable:") || line.starts_with("MemFree:") {
+                        mem_free = parse_memory_value(&line);
+                    }
+                }
+
+
+            let used = mem_total - mem_free;
+            return format!("{:.2} GiB / {:.2} GiB", kb_to_gb(used), kb_to_gb(mem_total));
+        }
+    }
+
+
 fn main() {
     let os_name = get_os_name().unwrap_or("Unknown".to_string());
     let cpu = get_cpu_name().unwrap_or("Unknown".to_string());
@@ -279,6 +327,7 @@ fn main() {
     let shell = get_shell();
     let desktop = get_desktop();
     let terminal = get_terminal();
+    let ram = get_memory();
 
 
     println!(
@@ -311,9 +360,12 @@ fn main() {
         "    {}
 
     {}   {}
+    {}   {}
     ",
         "~ hardware info ~".bright_cyan(),
         "cpu".bright_green(),
         cpu,
+        "ram".bright_red(),
+        ram,
     );
 }
