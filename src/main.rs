@@ -207,17 +207,15 @@ fn get_desktop() -> String {
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
         let desktop_env = std::env::var("XDG_CURRENT_DESKTOP");
+            .ok()
+            .unwrap_or_else(|| "Unknown".into());
+
         let display_backend_result = std::env::var("XDG_SESSION_TYPE");
 
         let mut display_backend = display_backend_result.unwrap_or_default();
         if let Some(c) = display_backend.as_mut_str().get_mut(0..1) {
             c.make_ascii_uppercase();
         }
-
-        let desktop_env = match desktop_env {
-            Err(_) => "Unknown".to_string(),
-            Ok(s) => s.trim_start_matches("none+").to_string(),
-        };
 
         let display_backend = if display_backend.is_empty() {
             "Unknown"
@@ -282,7 +280,9 @@ fn parse_memory_value(line: &str) -> u64 {
 fn get_memory() -> String {
     let kb_to_gb = |kilobytes: u64| kilobytes as f64 / (1024.0 * 1024.0);
 
-    let info = read_to_string("/proc/meminfo").ok().unwrap_or_else(|| "Unknown".to_string());
+    let info = read_to_string("/proc/meminfo")
+        .ok()
+        .unwrap_or_else(|| "Unknown".to_string());
     let mut mem_total: u64 = 0;
 
         #[cfg(target_os = "linux")]
