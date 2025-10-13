@@ -206,7 +206,7 @@ fn get_pkgs() -> String {
 fn get_desktop() -> String {
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
-        let desktop_env = std::env::var("XDG_CURRENT_DESKTOP");
+        let desktop_env = std::env::var("XDG_CURRENT_DESKTOP")
             .ok()
             .unwrap_or_else(|| "Unknown".into());
 
