@@ -361,6 +361,48 @@ fn get_memory() -> String {
         let used = pages_total.saturating_sub(pages_free);
         return format!("{:.2} GiB / {:.2} GiB", pages_to_gb(used), pages_to_gb(pages_total));
     }
+    #[cfg(target_os = "freebsd")]
+    {
+        let kb_to_gb = |kilobytes: u64| kilobytes as f64 / 1024.0 / 1024.0 / 1024.0;
+
+        let memtotal = Command::new("sysctl")
+            .args(["hw.physmem"])
+            .output()
+            .ok();
+
+        let memfree = Command::new("sysctl")
+            .args(["hw.usermem"])
+            .output()
+            .ok();
+
+        let mut mem_total: u64 = 0;
+        let mut mem_free: u64 = 0;
+
+        if let Some(output) = memtotal {
+            if let Ok(output_str) = str::from_utf8(&output.stdout) {
+                for line in output_str.lines() {
+                    if line.starts_with("hw.physmem:") {
+                        mem_total = parse_memory_value(line);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if let Some(output) = memfree {
+            if let Ok(output_str) = str::from_utf8(&output.stdout) {
+                for line in output_str.lines() {
+                    if line.starts_with("hw.usermem:") {
+                        mem_free = parse_memory_value(line);
+                        break;
+                    }
+                }
+            }
+        }
+
+        let used = mem_total.saturating_sub(mem_free);
+        return format!("{:.2} GiB / {:.2} GiB", kb_to_gb(used), kb_to_gb(mem_total));
+    }
 }
 
 fn main() {
