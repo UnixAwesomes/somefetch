@@ -175,7 +175,7 @@ fn get_pkgs() -> String {
         ("qlist", &["-I"], "portage"),
         ("pkg", &["info"], "pkg"),
         ("brew", &["list"], "homebrew"),
-        ("pkgin", &["info"], "pkgin"),
+        ("pkgin", &["list"], "pkgin"),
         ("pkg_info", &[], "pkg_info"),
         ("snap", &["list"], "snap"),
         ("eopkg", &["li"], "eopkg"),
@@ -187,9 +187,14 @@ fn get_pkgs() -> String {
 
     package_managers
         .iter()
+        .copied()
         .filter_map(|(cmd, args, tag)| {
-            Command::new(cmd)
-                .args(*args)
+            // pkg_add is the preferred option for NetBSD
+			if cmd == "pkgin" && env::consts::OS == "netbsd" {
+			    return None;
+			}
+			Command::new(cmd)
+                .args(args)
                 .output()
                 .ok()
                 .and_then(|output| {
