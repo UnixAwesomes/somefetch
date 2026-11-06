@@ -410,6 +410,15 @@ fn get_memory() -> String {
     }
 }
 
+fn print_section(title: &str, rows: &[(&str, &str, Color)], width: usize) {
+    println!();
+    println!("    {}", title.bright_cyan());
+    println!();
+    for (label, value, color) in rows {
+        println!("    {:width$} {}", label.color(*color), value, width = width);
+    }
+}
+
 fn main() {
     let os_name = get_os_name().unwrap_or("Unknown".to_string());
     let cpu = get_cpu_name().unwrap_or("Unknown".to_string());
@@ -420,43 +429,24 @@ fn main() {
     let terminal = get_terminal();
     let ram = get_memory();
 
+    let system = [
+        ("host",   hostname.as_str(), Color::BrightYellow),
+        ("kernel", os_name.as_str(),  Color::BrightGreen),
+        ("pkgs",   pkgs.as_str(),     Color::BrightMagenta),
+        ("shell",  shell.as_str(),    Color::BrightBlue),
+        ("de/wm",  desktop.as_str(),  Color::BrightRed),
+        ("term",   terminal.as_str(), Color::BrightMagenta),
+    ];
+    let hardware = [
+        ("cpu", cpu.as_str(), Color::BrightGreen),
+        ("ram", ram.as_str(), Color::BrightRed),
+    ];
 
-    println!(
-        "
-    {}
+    let width = system.iter().chain(hardware.iter())
+        .map(|(l, _, _)| l.len())
+        .max()
+        .unwrap_or(0);
 
-    {}   {}
-    {} {}
-    {}   {}
-    {}  {}
-    {}  {}
-    {}   {}
-    ",
-        "~ system info ~".bright_cyan(),
-        "host".bright_yellow(),
-        hostname,
-        "kernel".bright_green(),
-        os_name,
-        "pkgs".bright_magenta(),
-        pkgs,
-        "shell".bright_blue(),
-        shell,
-        "de/wm".bright_red(),
-        desktop,
-        "term".bright_purple(),
-        terminal,
-    );
-
-    println!(
-        "    {}
-
-    {}   {}
-    {}   {}
-    ",
-        "~ hardware info ~".bright_cyan(),
-        "cpu".bright_green(),
-        cpu,
-        "ram".bright_red(),
-        ram,
-    );
+    print_section("~ system info ~", &system, width);
+    print_section("~ hardware info ~", &hardware, width);
 }
