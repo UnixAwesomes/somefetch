@@ -449,4 +449,5 @@ fn main() {
 
     print_section("~ system info ~", &system, width);
     print_section("~ hardware info ~", &hardware, width);
+    println!();
 }
