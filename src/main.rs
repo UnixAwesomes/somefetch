@@ -28,15 +28,6 @@ fn print_section(title: &str, rows: &[(&str, &str, Color)], width: usize) {
     }
 }
 
-fn print_section(title: &str, rows: &[(&str, &str, Color)], width: usize) {
-    println!();
-    println!("    {}", title.bright_cyan());
-    println!();
-    for (label, value, color) in rows {
-        println!("    {:width$} {}", label.color(*color), value, width = width);
-    }
-}
-
 fn main() {
     let os_name = get_os_name().unwrap_or("Unknown".to_string());
     let cpu = get_cpu_name().unwrap_or("Unknown".to_string());
