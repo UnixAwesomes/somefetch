@@ -1,412 +1,30 @@
 use colored::*;
-use std::env;
 use std::str;
-use std::process::Command;
-use std::fs::read_to_string;
 
-fn get_os_name() -> Option<String> {
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    {
-        get_info_name("-rm")
-    }
-    #[cfg(any(target_os = "openbsd", target_os = "netbsd"))]
-    {
-        get_info_name("-srm")
-    }
-    #[cfg(target_os = "freebsd")]
-    {
-        get_info_name("-rom")
-    }
-    #[cfg(target_os = "illumos")]
-    {
-        get_info_name("-v")
-    }
-    #[cfg(target_os = "macos")]
-    {
-	get_info_name("-sr")
-    }
-    #[cfg(target_os = "windows")]
-    {
-        let mut kernel = String::new();
+use crate::memory::get_memory;
+use crate::cpu::get_cpu_name;
+use crate::host::get_host_name;
+use crate::shell::get_shell;
+use crate::terminal::get_terminal;
+use crate::desktop::get_desktop;
+use crate::pkgs::get_pkgs;
+use crate::os::get_os_name;
 
-        let output = Command::new("wmic")
-            .args(&["OS", "get", "Caption"])
-            .output()
-            .ok()?;
+mod desktop;
+mod host;
+mod memory;
+mod os;
+mod cpu;
+mod terminal;
+mod pkgs;
+mod shell;
 
-        let output = str::from_utf8(&output.stdout).ok()?;
-
-        for line in output.lines() {
-            if !line.contains("Caption") && line.trim().len() > 0 {
-                kernel = line.to_string();
-            }
-        }
-
-        Some(kernel)
-    }
-}
-
-fn get_info_name(args: &str) -> Option<String> {
-    let output = Command::new("uname").arg(args).output().ok()?;
-    Some(str::from_utf8(&output.stdout).ok()?.trim().to_string())
-}
-
-fn get_host_name() -> Option<String> {
-    let output = Command::new("hostname").output().ok()?;
-    Some(str::from_utf8(&output.stdout).ok()?.trim().to_string())
-}
-
-fn get_cpu_name() -> Option<String> {
-    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
-    {
-        let output = Command::new("sysctl")
-            .args(["-n", "hw.model"])
-            .output()
-            .ok()?;
-        Some(str::from_utf8(&output.stdout).ok()?.trim().to_string())
-    }
-
-    #[cfg(target_os = "netbsd")]
-    {
-        let output = Command::new("sysctl")
-            .args(["-n", "machdep.cpu_brand"])
-            .output()
-            .ok()?;
-        Some(str::from_utf8(&output.stdout).ok()?.trim().to_string())
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        let output = Command::new("sysctl")
-            .args(["-n", "machdep.cpu.brand_string"])
-            .output()
-            .ok()?;
-        Some(str::from_utf8(&output.stdout).ok()?.trim().to_string())
-    }
-
-    #[cfg(target_os = "illumos")]
-    {
-        let output = Command::new("kstat")
-            .args(["-p", "cpu_info:::brand"])
-            .output()
-            .ok()?;
-      
-        let output_str = str::from_utf8(&output.stdout).ok()?;
-
-        for line in output_str.lines() {
-            if let Some((_, model)) = line.split_once('\t') {
-                return Some(model.trim().to_string());
-            }
-        }
-        None
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-            let mut cpu = String::new();
-
-            let output = Command::new("wmic")
-                .args(["cpu", "get", "name"])
-                .output()
-                .ok()?;
-
-            let output_str = str::from_utf8(&output.stdout).ok()?;
-
-            for line in output_str.lines() {
-                if !line.contains("Name") && line.trim().len() > 0{
-                    cpu = line.to_string();
-                }
-
-            }
-            Some(cpu)
-    }
-    #[cfg(target_os = "android")]
-    {
-        let output = Command::new("lscpu")
-            .output()
-            .ok()?;
-
-        let output_str = str::from_utf8(&output.stdout).ok()?;
-
-        for line in  output_str.lines() {
-            if line.starts_with("Model name") {
-                let (_, name) = line.split_once(':')?;
-                return Some(name.trim().to_owned());
-            }
-        }
-        None
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        let info = read_to_string("/proc/cpuinfo").ok()?;
-        for line in info.lines() {
-            if line.starts_with("model name") {
-                let (_, name) = line.split_once(':')?;
-                return Some(name.trim().to_owned());
-            }
-        }
-        None
-    }
-}
-
-fn get_shell() -> String {
-    #[cfg(not(windows))]
-    {
-        env::var("SHELL")
-            .ok()
-            .and_then(|s| s.split('/').last().map(|s| s.to_string()))
-            .unwrap_or_else(|| "Unknown".into())
-    }
-    #[cfg(target_os="windows")]
-    {
-        "PowerShell".to_string()
-    }
-}
-
-fn get_pkgs() -> String {
-    let package_managers: &[(&str, &[&str], &str)] = &[
-        ("xbps-query", &["-l"][..], "xbps"),
-        ("apk", &["info"], "apk"),
-        ("rpm", &["-qa"], "rpm"),
-        ("flatpak", &["list"], "flatpak"),
-        ("dpkg-query", &["-f", "'.\\n'", "-W"], "apt"),
-        ("pacman", &["-Q", "-q"], "pacman"),
-        ("qlist", &["-I"], "portage"),
-        ("pkg", &["info"], "pkg"),
-        ("brew", &["list"], "homebrew"),
-        ("pkgin", &["list"], "pkgin"),
-        ("pkg_info", &[], "pkg_info"),
-        ("snap", &["list"], "snap"),
-        ("eopkg", &["li"], "eopkg"),
-        ("scoop.cmd", &["list"], "scoop"),
-        ("opkg", &["list-installed"], "opkg"),
-        ("nix-user-pkgs", &[], "nix-user"),
-        ("nix-store", &["-qR", "/run/current-system/sw"], "nix-system"),
-    ];
-
-    package_managers
-        .iter()
-        .copied()
-        .filter_map(|(cmd, args, tag)| {
-            // pkg_add is the preferred option for NetBSD
-			if cmd == "pkgin" && env::consts::OS == "netbsd" {
-			    return None;
-			}
-			Command::new(cmd)
-                .args(args)
-                .output()
-                .ok()
-                .and_then(|output| {
-                    let count = String::from_utf8_lossy(&output.stdout)
-                        .lines()
-                        .count();
-                    (count > 0).then(|| format!("{}({})", count, tag))
-                })
-        })
-        .collect::<Vec<_>>()
-        .join(", ")
-}
-
-fn get_desktop() -> String {
-    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-    {
-        let desktop_env = std::env::var("XDG_CURRENT_DESKTOP")
-            .ok()
-            .unwrap_or_else(|| "Unknown".into());
-
-        let display_backend_result = std::env::var("XDG_SESSION_TYPE");
-
-        let mut display_backend = display_backend_result.unwrap_or_default();
-        if let Some(c) = display_backend.as_mut_str().get_mut(0..1) {
-            c.make_ascii_uppercase();
-        }
-
-        let display_backend = if display_backend.is_empty() {
-            "Unknown"
-        } else {
-            &display_backend
-        }
-            .to_string();
-
-        format!("{desktop_env} ({display_backend})")
-    }
-    #[cfg(target_os="windows")]
-    {
-        "Fluent".to_string()
-    }
-    #[cfg(target_os="macos")]
-    {
-        "Quartz Compositor".to_string()
-    }
-}
-
-fn get_terminal() -> String {
-    #[cfg(not(windows))]
-    {
-        
-        if let Ok(mut term_program) = env::var("TERM_PROGRAM") {
-            match term_program.as_str() {
-                "kgx" => term_program = "gnome-console".to_string(),
-                "iTerm.app" => term_program = "iTerm2".to_string(),
-                "Terminal.app" => term_program = "Apple Terminal".to_string(),
-                "Hyper" => term_program = "HyperTerm".to_string(),
-                _ => {}
-            }
-            return term_program;
-        }
-
-        if let Ok(mut term) = env::var("TERM") {
-            match term.as_str() {
-                "rxvt-unicode-256color" => term = "urxvt".to_string(),
-                "xterm-256color" => term = "xterm".to_string(),
-                "xterm-kitty" => term = "kitty".to_string(),
-                "linux" => term = "tty".to_string(),
-                _ => {}
-            }
-            return term;
-        }
-        "Unknown".to_string()
-    }
-    #[cfg(windows)]
-    {
-        "Windows Terminal".to_string()
-    }
-}
-
-fn parse_memory_value(line: &str) -> u64 {
-    line.split_whitespace()
-        .nth(1)
-        .unwrap_or("0")
-        .parse::<u64>()
-        .unwrap_or(0)
-}
-
-fn get_memory() -> String {
-    #[cfg(any(target_os = "linux", target_os = "netbsd", target_os = "android"))]
-    {
-        let kb_to_gb = |kilobytes: u64| kilobytes as f64 / (1024.0 * 1024.0);
-
-        let info = read_to_string("/proc/meminfo")
-            .ok()
-            .unwrap_or_else(|| "Unknown".to_string());
-        let mut mem_total: u64 = 0;
-
-        #[cfg(any(target_os = "linux", target_os = "android"))]
-        {
-            let mut mem_available: u64 = 0;
-            for line in info.lines() {
-                if line.starts_with("MemTotal:") {
-                    mem_total = parse_memory_value(&line);
-                } else if line.starts_with("MemAvailable:") {
-                    mem_available = parse_memory_value(&line);
-                }
-            }
-
-
-            let used = mem_total - mem_available;
-            return format!("{:.2} GiB / {:.2} GiB", kb_to_gb(used), kb_to_gb(mem_total));
-        }
-
-        #[cfg(target_os = "netbsd")]
-        {
-            let mut mem_free: u64 = 0;
-            for line in info.lines() {
-                if line.starts_with("MemTotal:") {
-                    mem_total = parse_memory_value(&line);
-                } else if line.starts_with("MemAvailable:") || line.starts_with("MemFree:") {
-                    mem_free = parse_memory_value(&line);
-                }
-            }
-
-
-            let used = mem_total - mem_free;
-            return format!("{:.2} GiB / {:.2} GiB", kb_to_gb(used), kb_to_gb(mem_total));
-        }
-    }
-    #[cfg(target_os = "illumos")]
-    {
-        let pages_to_gb = |pages: u64| (pages * 4) as f64 / 1024.0 / 1024.0;
-
-        let pagestotal = Command::new("kstat")
-            .args(["-p", "unix:0:system_pages:pagestotal"])
-            .output()
-            .ok();
-
-        let pagesfree = Command::new("kstat")
-            .args(["-p", "unix:0:system_pages:pagesfree"])
-            .output()
-            .ok();
-
-        let mut pages_total: u64 = 0;
-        let mut pages_free: u64 = 0;
-
-        if let Some(output) = pagestotal {
-            if let Ok(output_str) = str::from_utf8(&output.stdout) {
-                for line in output_str.lines() {
-                    if line.starts_with("unix:0:system_pages:pagestotal\t") {
-                        pages_total = parse_memory_value(line);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if let Some(output) = pagesfree {
-            if let Ok(output_str) = str::from_utf8(&output.stdout) {
-                for line in output_str.lines() {
-                    if line.starts_with("unix:0:system_pages:pagesfree\t") {
-                        pages_free = parse_memory_value(line);
-                        break;
-                    }
-                }
-            }
-        }
-
-        let used = pages_total.saturating_sub(pages_free);
-        return format!("{:.2} GiB / {:.2} GiB", pages_to_gb(used), pages_to_gb(pages_total));
-    }
-    #[cfg(target_os = "freebsd")]
-    {
-        let kb_to_gb = |kilobytes: u64| kilobytes as f64 / 1024.0 / 1024.0 / 1024.0;
-
-        let memtotal = Command::new("sysctl")
-            .args(["hw.physmem"])
-            .output()
-            .ok();
-
-        let memfree = Command::new("sysctl")
-            .args(["hw.usermem"])
-            .output()
-            .ok();
-
-        let mut mem_total: u64 = 0;
-        let mut mem_free: u64 = 0;
-
-        if let Some(output) = memtotal {
-            if let Ok(output_str) = str::from_utf8(&output.stdout) {
-                for line in output_str.lines() {
-                    if line.starts_with("hw.physmem:") {
-                        mem_total = parse_memory_value(line);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if let Some(output) = memfree {
-            if let Ok(output_str) = str::from_utf8(&output.stdout) {
-                for line in output_str.lines() {
-                    if line.starts_with("hw.usermem:") {
-                        mem_free = parse_memory_value(line);
-                        break;
-                    }
-                }
-            }
-        }
-
-        let used = mem_total.saturating_sub(mem_free);
-        return format!("{:.2} GiB / {:.2} GiB", kb_to_gb(used), kb_to_gb(mem_total));
+fn print_section(title: &str, rows: &[(&str, &str, Color)], width: usize) {
+    println!();
+    println!("    {}", title.bright_cyan());
+    println!();
+    for (label, value, color) in rows {
+        println!("    {:width$} {}", label.color(*color), value, width = width);
     }
 }
 
@@ -427,7 +45,7 @@ fn main() {
     let shell = get_shell();
     let desktop = get_desktop();
     let terminal = get_terminal();
-    let ram = get_memory();
+    let memory = get_memory();
 
     let system = [
         ("host",   hostname.as_str(), Color::BrightYellow),
@@ -439,7 +57,7 @@ fn main() {
     ];
     let hardware = [
         ("cpu", cpu.as_str(), Color::BrightGreen),
-        ("ram", ram.as_str(), Color::BrightRed),
+        ("ram", memory.as_str(), Color::BrightRed),
     ];
 
     let width = system.iter().chain(hardware.iter())
