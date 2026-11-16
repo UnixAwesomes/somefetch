@@ -17,3 +17,4 @@ Debian Package Build Instructions: [link](https://github.com/OctoBanon-Main/some
 
 link: [click](https://software.opensuse.org//download.html?project=home%3Asophr.temin&package=somefetch)
 
+as well [link](https://github.com/UnixAwesomes/somefetch)
